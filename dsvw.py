@@ -249,7 +249,22 @@ class ReqHandler(http.server.BaseHTTPRequestHandler):
         code = http.client.OK
         content = HTML_PREFIX
         cursor = connection.cursor()
-        params = parse_qs(query)
+        #        params = parse_qs(query)
+        params = dict(
+            (
+                match.group("parameter"),
+                urllib.parse.unquote(
+                    ",".join(
+                        re.findall(
+                            r"(?:\A|[?&])%s=([^&]+)" % match.group("parameter"), query
+                        )
+                    )
+                ),
+            )
+            for match in re.finditer(
+                r"((\A|[?&])(?P<parameter>[\w\[\]]+)=)([^&]+)", query
+            )
+        )
         try:
             if path == "/":
                 if "id" in params:
